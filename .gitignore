@@ -1,0 +1,11 @@
+# Minikube, Docker and kubeconfig
+.minikube/
+.kube/
+docker-compose.override.yml
+
+# Windows / IDE / Editor
+Thumbs.db
+.vscode/
+*.log
+*.tmp
+node_modules/
