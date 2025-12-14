@@ -1,0 +1,25 @@
+# .gitignore (in the root directory)
+# Python environment files
+*.pyc
+__pycache__/
+venv/
+.env
+
+# Docker files
+# The images directory for screenshots
+image/
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Vagrant files (for IaC step)
+.vagrant/
+
+# Docker build/run artifacts (you should clean these up if they appear)
+userapi/venv/
+userapi/__pycache__/
+
+# Sensitive files
+*.pem
+*.key
