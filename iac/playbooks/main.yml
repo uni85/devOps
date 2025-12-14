@@ -1,0 +1,74 @@
+---
+- name: Provision Application and Database Environment
+  hosts: all  # Target the VM provisioned by Vagrant
+  become: yes # Run tasks with elevated privileges (sudo)
+  vars:
+    mysql_root_password: "my_ansible_db_password" # Set a secure password for the DB
+    app_directory: "/vagrant/userapi"
+    app_port: 5000
+
+  tasks:
+    - name: Ensure Python 3 and pip are installed
+      ansible.builtin.apt:
+        name: python3, python3-pip
+        state: present
+        update_cache: yes
+
+    # --- Database Setup (MySQL) ---
+    - name: Install MySQL server
+      ansible.builtin.apt:
+        name: mysql-server
+        state: present
+
+    - name: Start MySQL service
+      ansible.builtin.service:
+        name: mysql
+        state: started
+        enabled: yes
+
+    - name: Create the application database
+      community.mysql.mysql_db:
+        name: devops_userdb
+        state: present
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+        # Set the root password on first run
+        target: localhost
+        port: 3306
+
+    # --- Application Deployment ---
+    - name: Install Python dependencies (Flask, etc.)
+      ansible.builtin.pip:
+        requirements: "{{ app_directory }}/requirements.txt"
+        virtualenv: /opt/userapi_venv
+        virtualenv_command: python3 -m venv
+
+    - name: Ensure application code is present (via Vagrant synced folder)
+      ansible.builtin.file:
+        path: "{{ app_directory }}"
+        state: directory
+
+    # --- Run Application (Using a simple service file for stability) ---
+    - name: Install service file for the user API (using systemd)
+      ansible.builtin.template:
+        src: userapi.service.j2 # We will create this template next
+        dest: /etc/systemd/system/userapi.service
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Start and enable the userapi service
+      ansible.builtin.systemd:
+        name: userapi
+        state: restarted
+        enabled: yes
+        daemon_reload: yes
+
+    # --- Health Check (Required by project instructions) ---
+    - name: Wait for application to be healthy on port {{ app_port }}
+      ansible.builtin.wait_for:
+        port: "{{ app_port }}"
+        host: "127.0.0.1"
+        timeout: 60
+        delay: 5
+        msg: "User API failed to start after 60 seconds."

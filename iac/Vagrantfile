@@ -1,0 +1,35 @@
+# iac/Vagrantfile (COMPLETE AND CORRECTED)
+Vagrant.configure("2") do |config|
+  
+  # 1. Configure the Box (VM Image) - THIS WAS MISSING
+  config.vm.box = "ubuntu/focal64" # Ubuntu 20.04 LTS
+
+  # 2. Configure Network Access
+  # Use a private network to give the VM a fixed IP
+  config.vm.network "private_network", ip: "192.168.56.10"
+
+  # 3. Configure Synced Folder (for application code)
+  # This mounts your local 'userapi' folder into the VM at '/vagrant/userapi'
+  config.vm.synced_folder "../userapi", "/vagrant/userapi"
+
+  # 4. Configure Ansible Provisioner
+  config.vm.provision "ansible" do |ansible|
+    ansible.playbook = "playbooks/main.yml"
+    
+    # --- UTF-8 LOCALE FIX for Windows Host ---
+    # This block explicitly sets the required UTF-8 environment variables 
+    # for the Ansible control machine, resolving the Windows locale error (1256).
+    ansible.host_vars = {
+      "all" => {
+        "ansible_ssh_args" => "-o ControlMaster=auto -o ControlPersist=60s",
+        "ansible_local_tmp" => "~/.ansible/tmp",
+        "ANSIBLE_PYTHON_INTERPRETER" => "auto",
+        "ANSIBLE_LOCALE" => "en_US.UTF-8",
+        "LANG" => "en_US.UTF-8",
+        "LC_ALL" => "en_US.UTF-8"
+      }
+    }
+    # --- END UTF-8 FIX ---
+
+  end
+end
