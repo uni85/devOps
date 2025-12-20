@@ -46,41 +46,44 @@ Goals:
 
 ## Recommended repo structure
 
-Example layout — adapt to what you actually have:
-
 ```
-.
-├── README.md
-├── LICENSE
-├── .github/
-│   └── workflows/
-│       └── ci.yml
-├── infra/
-│   ├── terraform/
-│   │   ├── prod/
-│   │   └── staging/
-│   └── cloudformation/
-├── k8s/
-│   ├── charts/
-│   └── manifests/
-├── ansible/
-│   ├── playbooks/
-│   └── roles/
-├── scripts/
-│   ├── deploy.sh
-│   ├── backup.sh
-│   └── helpers/
-├── docker/
-│   └── docker-compose.yml
+.github/workflows/
+├── ci.yml
+
+iac/
+├── .vagrant/
+│   └── rgloader
+├── playbooks/
+└── Vagrantfile
+
+k8s/
+├── app-deployment.yaml
+├── mysql-deployment.yaml
+└── mysql-pvc.yaml
+
+test/
+└── basic.test.js
+
+userapi/
+├── .venv/
+├── __pycache__/
+├── conf/
+├── src/
 ├── tests/
-│   └── integration/
-└── docs/
-    └── runbooks/
+├── .dockerignore
+├── Dockerfile
+├── app.py
+└── requirements.txt
+
+venv/
+├── Lib/site-packages/
+├── Scripts/
+└── pyvenv.cfg
+
+├── .gitignore
+├── README.md
+├── docker-compose.yml
 ```
-
-If your repo differs, update this section to reflect the real layout.
-
----
 
 ## Quick start
 
@@ -117,16 +120,13 @@ docker-compose up --build
 
 - Use docker-compose for local integration tests:
   - Bring up dependent services with `docker-compose -f docker/docker-compose.yml up --build`
-  - Run tests with `docker-compose exec <service> pytest` or the test command used by your project.
+  - Run tests with `docker-compose exec <service> pytest` or the test command used by project.
 
 - Linting / formatting:
   - Shell: `shellcheck` for scripts
   - Ansible: `ansible-lint`
   - Terraform: `terraform fmt` and `terraform validate`
   - YAML: `yamllint`
-
-- Unit tests:
-  - Place unit tests in `tests/unit/` and run `pytest` (or your chosen framework).
 
 ---
 
@@ -173,8 +173,6 @@ This section should be adapted to the repo specifics. Example strategies:
      ./scripts/deploy.sh --env=staging --version=1.2.3
      ```
 
-Make sure you have the right credentials and permissions for the target account/environment before applying changes.
-
 ---
 
 ## CI/CD (GitHub Actions)
@@ -189,8 +187,6 @@ Example of tasks in CI:
 - Test: `pytest`, integration tests against ephemeral environment
 - Security: `trivy` or `grype` scan of images
 - IaC checks: `terraform validate`, `tflint`, `checkov` for guardrails
-
-Protect `main` with branch rules and require passing checks before merge.
 
 ---
 
@@ -218,23 +214,11 @@ Best practices:
 
 ## Configuration & secrets
 
-Do NOT commit secrets to the repository.
-
 Recommended approaches:
 - Environment variables injected by CI/CD (GitHub Secrets)
 - Use secret manager (AWS Secrets Manager, Azure Key Vault, HashiCorp Vault)
 - Use SOPS for encrypted files stored in git (with KMS/GPG)
 - For Terraform, use remote state + secret backends or Vault integration
-
-Example .env template (do not commit secrets):
-```
-# .env.example
-AWS_REGION=us-east-1
-AWS_PROFILE=your-profile
-DOCKER_REGISTRY=ghcr.io
-IMAGE_REPO=ghcr.io/uni85/my-app
-KUBE_CONTEXT=staging
-```
 
 ---
 
@@ -311,9 +295,6 @@ This repository is licensed under the MIT License — see the [LICENSE](./LICENS
 Maintainers:
 - uni85 — primary maintainer
 - (Add other maintainers here)
-
-For security issues, use the repository's security contact or open a confidential issue if available.
-
 ---
 
 ## Useful commands / cheat sheet
@@ -359,22 +340,3 @@ CI:
 gh workflow run ci.yml --ref main
 ```
 
----
-
-## FAQ
-
-Q: Where do I find credentials for cloud provider?
-A: Credentials are NOT stored here. Use your cloud IAM/SSO or request access from the team. Follow the Configuration & secrets section.
-
-Q: How do I deploy to production?
-A: Follow the documented promotion process — typically a reviewed PR merged to main triggers a pipeline. If production deploys are manual, follow docs/runbooks/PRODUCTION-DEPLOY.md.
-
----
-
-If you'd like, I can:
-- Replace the placeholders with a README that matches the exact files in the repo (I’ll need file paths or a listing of top-level files).
-- Generate example GitHub Actions workflow, Terraform remote state config, or a CONTRIBUTING.md file.
-
-Would you like me to tailor this README to the actual repository contents now? If yes, provide either:
-- The repository file tree (ls -la or tree), or
-- A list of the primary folders/files you want documented.
