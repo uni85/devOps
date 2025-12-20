@@ -2,6 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: userapi
+  labels:
+    app: userapi
 spec:
   replicas: 2
   selector:
@@ -14,28 +16,30 @@ spec:
     spec:
       containers:
       - name: userapi
-        image: your-dockerhub-username/userapi:latest
+        image: uni/userapi:latest
+        imagePullPolicy: Never
         ports:
         - containerPort: 5000
         env:
         - name: MYSQL_HOST
-          value: "mysql"
+          value: mysql
         - name: MYSQL_USER
-          value: "root"
+          value: appuser
         - name: MYSQL_PASSWORD
-          value: "my-secret-pw"
+          value: apppass
         - name: MYSQL_DB
-          value: "devops_userdb"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: userapi-service
-spec:
-  type: NodePort
-  selector:
-    app: userapi
-  ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 5000
+          value: userdb
+        - name: FLASK_ENV
+          value: development
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 10
+          periodSeconds: 5

@@ -6,31 +6,57 @@ import MySQLdb.cursors
 app = Flask(__name__)
 
 # --- MySQL Configuration ---
-app.config['MYSQL_HOST'] = os.environ.get('MYSQL_HOST', '127.0.0.1')  # Default to 127.0.0.1 for local testing
+app.config['MYSQL_HOST'] = os.environ.get('MYSQL_HOST', '127.0.0.1')
 app.config['MYSQL_USER'] = os.environ.get('MYSQL_USER', 'root')
 app.config['MYSQL_PASSWORD'] = os.environ.get('MYSQL_PASSWORD', 'my-secret-pw')
 app.config['MYSQL_DB'] = os.environ.get('MYSQL_DB', 'devops_userdb')
-app.secret_key = 'super_secret_key' # Required for sessions/flash messages (good practice)
+app.secret_key = 'super_secret_key'
 
 mysql = MySQL(app)
 # --- End Configuration ---
+
+# Create table on startup
+def init_db():
+    try:
+        cursor = mysql.connection.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+              id INT AUTO_INCREMENT PRIMARY KEY,
+              name VARCHAR(100) NOT NULL,
+              email VARCHAR(100) UNIQUE NOT NULL,
+              password VARCHAR(255) NOT NULL,
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        mysql.connection.commit()
+        cursor.close()
+        print("✓ Users table initialized")
+    except Exception as e:
+        print(f"✗ Database init failed: {e}")
+
+with app.app_context():
+    init_db()
 
 # -----------------
 # 1. CREATE User (POST)
 # -----------------
 @app.route('/users', methods=['POST'])
 def add_user():
-    data = request.get_json()
-    name = data['name']
-    email = data['email']
-    # NOTE: In a real app, hash the password (e.g., using bcrypt)
-    password = data['password']
-
-    cursor = mysql.connection.cursor()
     try:
+        data = request.get_json()
+
+        # These will raise KeyError if missing
+        name = data['name']
+        email = data['email']
+        password = data['password']
+
+        # Only connect to DB AFTER validation
+        cursor = mysql.connection.cursor()
+
         # Check if email already exists
         cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
         if cursor.fetchone():
+            cursor.close()
             return jsonify({'message': 'User with this email already exists'}), 409
         
         # Insert new user
@@ -39,28 +65,31 @@ def add_user():
             (name, email, password)
         )
         mysql.connection.commit()
-        return jsonify({'message': 'User created successfully', 'name': name}), 201
-    except Exception as e:
-        print(e)
-        return jsonify({'message': 'Error creating user', 'error': str(e)}), 500
-    finally:
         cursor.close()
 
+        return jsonify({'message': 'User created successfully', 'name': name}), 201
+
+    except Exception as e:
+        return jsonify({'message': 'Error creating user', 'error': str(e)}), 500
+        
 # -----------------
 # 2. READ All Users (GET)
 # -----------------
 @app.route('/users', methods=['GET'])
 def get_all_users():
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor) # Get results as dictionaries
-    cursor.execute("SELECT id, name, email FROM users")
-    users = cursor.fetchall()
-    cursor.close()
-    
-    # Check if users is empty (for health check/testing)
-    if users:
+    try:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("SELECT * FROM users")
+        users = cursor.fetchall()
+        cursor.close()
+
+        if not users:
+            return jsonify({"message": "No users found"}), 200
+
         return jsonify(users), 200
-    else:
-        return jsonify({'message': 'No users found'}), 404
+
+    except Exception as e:
+        return jsonify({"error": "Database unavailable"}), 503
 
 # -----------------
 # 3. UPDATE User (PUT) - by ID
@@ -70,10 +99,9 @@ def update_user(user_id):
     data = request.get_json()
     name = data.get('name')
     email = data.get('email')
-    password = data.get('password') # Only update if provided
+    password = data.get('password')
 
     cursor = mysql.connection.cursor()
-    # Build the query dynamically based on provided fields
     updates = []
     params = []
     
@@ -84,14 +112,12 @@ def update_user(user_id):
         updates.append("email = %s")
         params.append(email)
     if password:
-        # NOTE: In a real app, hash the password before update
         updates.append("password = %s")
         params.append(password)
         
     if not updates:
         return jsonify({'message': 'No fields provided for update'}), 400
 
-    # Final query construction
     query = "UPDATE users SET " + ", ".join(updates) + " WHERE id = %s"
     params.append(user_id)
 
@@ -130,12 +156,11 @@ def delete_user(user_id):
 
 
 # -----------------
-# 5. HEALTH CHECK (GET) - Required for the project
+# 5. HEALTH CHECK (GET)
 # -----------------
 @app.route('/health', methods=['GET'])
 def health_check():
     try:
-        # Attempt to get a connection and execute a simple query (e.g., SELECT 1)
         cursor = mysql.connection.cursor()
         cursor.execute("SELECT 1")
         cursor.close()
@@ -144,5 +169,4 @@ def health_check():
         return jsonify({'status': 'DOWN', 'database_connection': 'FAILED', 'error': str(e)}), 503
 
 if __name__ == '__main__':
-    # Use 0.0.0.0 for containerized/VM deployment compatibility
     app.run(debug=True, host='0.0.0.0', port=5000)
