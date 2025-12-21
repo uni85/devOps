@@ -123,7 +123,7 @@ docker-compose up --build
   - Run tests with `docker-compose exec <service> pytest` or the test command used by project.
 
 ### Py App test
-![Py App test](userapi/tests/img/TestI.jpeg)
+![Py App test](userapi/tests/img/TestIIV.jpeg)
 
 ### Docker test
 ![Docker test](userapi/tests/img/TestII.jpeg)
@@ -167,7 +167,7 @@ This section should be adapted to the repo specifics. Example strategies:
        --values k8s/charts/my-app/values.staging.yaml
      ```
 ### Test:
-![K8S test](userapi/tests/img/TestIIV.jpeg)
+![K8S test](userapi/tests/img/TestI.jpeg)
 
 3. Ansible (configuration management)
    - Run a playbook:
@@ -349,6 +349,7 @@ CI:
 # Trigger workflow manually (example using gh CLI)
 gh workflow run ci.yml --ref main
 ```
+
 
 
 
