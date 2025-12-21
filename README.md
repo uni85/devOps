@@ -44,7 +44,7 @@ Goals:
 
 ---
 
-## Recommended repo structure
+## Repo structure
 
 ```
 .github/workflows/
@@ -87,7 +87,7 @@ venv/
 
 ## Quick start
 
-Prerequisites (examples — update according to the repo):
+Prerequisites:
 - Git >= 2.25
 - Docker & docker-compose
 - kubectl (for Kubernetes manifests)
@@ -121,6 +121,10 @@ docker-compose up --build
 - Use docker-compose for local integration tests:
   - Bring up dependent services with `docker-compose -f docker/docker-compose.yml up --build`
   - Run tests with `docker-compose exec <service> pytest` or the test command used by project.
+
+### Tests
+![Py App test](devOps/userapi/tests/img/TestI.jpeg)
+![Docker test](devOps/userapi/tests/img/TestII.jpeg)
 
 - Linting / formatting:
   - Shell: `shellcheck` for scripts
@@ -160,6 +164,8 @@ This section should be adapted to the repo specifics. Example strategies:
        --namespace my-namespace \
        --values k8s/charts/my-app/values.staging.yaml
      ```
+### Test:
+![K8S test](devOps/userapi/tests/img/TestIIV.jpeg)
 
 3. Ansible (configuration management)
    - Run a playbook:
@@ -293,8 +299,10 @@ See CONTRIBUTING.md (create one if missing) for more detailed rules.
 This repository is licensed under the MIT License — see the [LICENSE](./LICENSE) file.
 
 Maintainers:
-- uni85 — primary maintainer
-- (Add other maintainers here)
+- uni85
+- ninouft
+- souhaGalai
+- Mirabenh
 ---
 
 ## Useful commands / cheat sheet
@@ -339,4 +347,5 @@ CI:
 # Trigger workflow manually (example using gh CLI)
 gh workflow run ci.yml --ref main
 ```
+
 
