@@ -123,10 +123,10 @@ docker-compose up --build
   - Run tests with `docker-compose exec <service> pytest` or the test command used by project.
 
 ### Tests
-## Py App test
+### Py App test
 ![Py App test](userapi/tests/img/TestI.jpeg)
 
-## Docker test
+### Docker test
 ![Docker test](userapi/tests/img/TestII.jpeg)
 
 - Linting / formatting:
@@ -350,6 +350,7 @@ CI:
 # Trigger workflow manually (example using gh CLI)
 gh workflow run ci.yml --ref main
 ```
+
 
 
 
