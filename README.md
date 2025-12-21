@@ -304,7 +304,7 @@ Maintainers:
 - uni85
 - ninouft
 - souhaGalai
-- Mirabenh
+- mirabenh
 ---
 
 ## Useful commands / cheat sheet
@@ -349,6 +349,7 @@ CI:
 # Trigger workflow manually (example using gh CLI)
 gh workflow run ci.yml --ref main
 ```
+
 
 
 
